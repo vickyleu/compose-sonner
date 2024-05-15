@@ -6,4 +6,17 @@ plugins {
     alias(libs.plugins.jetbrainsCompose) apply false
     alias(libs.plugins.kotlinMultiplatform) apply false
     alias(libs.plugins.jetbrainsKotlinAndroid) apply false
+    alias(libs.plugins.compose.compiler) apply false
+    alias(libs.plugins.dokka) apply false
+}
+
+
+allprojects {
+    if( tasks.findByName("testClasses") == null){
+        try {
+            tasks.register("testClasses")
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
 }
