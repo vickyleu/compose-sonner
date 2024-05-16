@@ -71,7 +71,9 @@ kotlin {
         }
     }
 }
-
+compose {
+    kotlinCompilerPlugin = "org.jetbrains.kotlin:kotlin-compose-compiler-plugin-embeddable:${libs.versions.kotlin.get()}"
+}
 android {
     namespace = "com.dokar.sonner.core"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
