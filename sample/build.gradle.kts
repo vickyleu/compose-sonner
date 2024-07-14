@@ -12,9 +12,6 @@ plugins {
     alias(libs.plugins.jetbrainsCompose)
     alias(libs.plugins.compose.compiler)
 }
-compose {
-    kotlinCompilerPlugin = "org.jetbrains.kotlin:kotlin-compose-compiler-plugin-embeddable:${libs.versions.kotlin.get()}"
-}
 kotlin {
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
@@ -99,7 +96,7 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
     dependencies {
-        debugImplementation(libs.compose.ui.tooling)
+        debugImplementation(compose.uiTooling)
     }
 }
 
@@ -113,8 +110,4 @@ compose.desktop {
             packageVersion = "1.0.0"
         }
     }
-}
-
-compose.experimental {
-    web.application {}
 }

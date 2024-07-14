@@ -1,4 +1,7 @@
+@file:OptIn(ExperimentalKotlinGradlePluginApi::class)
+
 import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
+import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.targets.js.dsl.ExperimentalWasmDsl
 import java.util.Properties
@@ -32,10 +35,8 @@ kotlin {
 
     androidTarget {
         publishLibraryVariants("release")
-        compilations.all {
-            kotlinOptions {
-                jvmTarget = "11"
-            }
+        compilerOptions{
+            jvmTarget.set(JvmTarget.JVM_11)
         }
     }
 
@@ -52,6 +53,7 @@ kotlin {
             implementation(libs.compose.ui.tooling.preview)
         }
         commonMain.dependencies {
+            implementation(project.dependencies.platform(libs.compose.bom))
             implementation(compose.runtime)
             implementation(compose.foundation)
             implementation(compose.ui)
@@ -71,9 +73,6 @@ kotlin {
         }
     }
 }
-compose {
-    kotlinCompilerPlugin = "org.jetbrains.kotlin:kotlin-compose-compiler-plugin-embeddable:${libs.versions.kotlin.get()}"
-}
 android {
     namespace = "com.dokar.sonner.core"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
@@ -87,13 +86,10 @@ android {
         targetCompatibility = JavaVersion.toVersion(libs.versions.jvmTarget.get())
     }
     dependencies {
-        debugImplementation(libs.compose.ui.tooling)
+        debugImplementation(compose.uiTooling)
     }
 }
 
-compose.experimental {
-    web.application {}
-}
 
 tasks
     .withType<org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile>()
