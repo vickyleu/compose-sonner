@@ -23,7 +23,17 @@ kotlin {
         }
         binaries.executable()
     }
-    
+
+    js(IR) {
+        moduleName = "composeApp-jscanvas"
+        browser {
+            commonWebpackConfig {
+                outputFileName = "composeApp-jscanvas.js"
+            }
+        }
+        binaries.executable()
+    }
+
     androidTarget {
         compilerOptions {
             jvmTarget.set(JvmTarget.fromTarget(libs.versions.jvmTarget.get()))
