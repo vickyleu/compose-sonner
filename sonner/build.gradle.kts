@@ -1,5 +1,7 @@
+@file:OptIn(ExperimentalKotlinGradlePluginApi::class)
+
 import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
-import org.jetbrains.dokka.gradle.DokkaTask
+import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.targets.js.dsl.ExperimentalWasmDsl
 import java.util.Properties
@@ -8,10 +10,10 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.jetbrainsCompose)
     alias(libs.plugins.androidLibrary)
-    alias(libs.plugins.dokka)
 //    alias(libs.plugins.mavenPublish)
+    alias(libs.plugins.dokka)
+    alias(libs.plugins.compose.compiler)
     id("maven-publish")
-//    id("signing")
 }
 
 kotlin {
@@ -28,33 +30,33 @@ kotlin {
                 enabled = false
             }
         }
-        binaries.executable()
+        binaries.library()
+    }
+    js(IR) {
+        moduleName = "compose-sooner-jscanvas"
+        browser {
+            commonWebpackConfig {
+                outputFileName = "compose-sooner-jscanvas.js"
+            }
+
+            testTask {
+                // Tests are broken now: Module not found: Error: Can't resolve './skiko.mjs'
+                enabled = false
+            }
+        }
+        binaries.library()
     }
 
     androidTarget {
         publishLibraryVariants("release")
-        compilations.all {
-            kotlinOptions {
-                jvmTarget = libs.versions.jvmTarget.get()
-            }
+        compilerOptions{
+            jvmTarget.set(JvmTarget.JVM_11)
         }
     }
 
-
-    listOf(
-        iosX64(),
-        iosArm64(),
-        iosSimulatorArm64(),
-    ).forEach { iosTarget ->
-        iosTarget.binaries.apply {
-            framework {
-                baseName = "ComposeApp"
-                isStatic = true
-                // https://youtrack.jetbrains.com/issue/KT-56152/KMM-Cannot-infer-a-bundle-ID-from-packages-of-source-files-and-exported-dependencies#focus=Comments-27-6806555.0-0
-                binaryOption("bundleId", "com.dokar.sonner.core")
-            }
-        }
-    }
+    iosX64()
+    iosArm64()
+    iosSimulatorArm64()
 
     jvm("desktop")
 
@@ -66,9 +68,6 @@ kotlin {
         }
         commonMain.dependencies {
             implementation(project.dependencies.platform(libs.compose.bom))
-            implementation(project.dependencies.platform(libs.coroutines.bom))
-            implementation(project.dependencies.platform(libs.kotlin.bom))
-
             implementation(compose.runtime)
             implementation(compose.foundation)
             implementation(compose.ui)
@@ -88,7 +87,6 @@ kotlin {
         }
     }
 }
-
 android {
     namespace = "com.dokar.sonner.core"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
@@ -102,13 +100,10 @@ android {
         targetCompatibility = JavaVersion.toVersion(libs.versions.jvmTarget.get())
     }
     dependencies {
-        debugImplementation(libs.compose.ui.tooling)
+        debugImplementation(compose.uiTooling)
     }
 }
 
-compose.experimental {
-    web.application {}
-}
 
 tasks
     .withType<org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile>()
@@ -119,15 +114,15 @@ tasks
     }
 
 
-
+val currentName = project.name.replace(rootProject.name + "-", "")
 buildscript {
     dependencies {
         val dokkaVersion = libs.versions.dokka.get()
         classpath("org.jetbrains.dokka:dokka-base:$dokkaVersion")
     }
 }
-group = "com.vickyleu.sonner"
-version = "1.0.0"
+group = "com.vickyleu.${currentName}"
+version = "1.0.2"
 
 tasks.withType<PublishToMavenRepository> {
     val isMac = DefaultNativePlatform.getCurrentOperatingSystem().isMacOsX
@@ -145,22 +140,22 @@ tasks.withType<PublishToMavenRepository> {
 
 val javadocJar by tasks.registering(Jar::class) {
     dependsOn(tasks.dokkaHtml)
-    from(tasks.dokkaHtml.flatMap(DokkaTask::outputDirectory))
+    from(tasks.dokkaHtml.flatMap(org.jetbrains.dokka.gradle.DokkaTask::outputDirectory))
     archiveClassifier = "javadoc"
 }
 
 tasks.dokkaHtml {
     // outputDirectory = layout.buildDirectory.get().resolve("dokka")
     offlineMode = false
-    moduleName = "sonner"
+    moduleName = rootProject.name
 
-    /*// See the buildscript block above and also
+    // See the buildscript block above and also
     // https://github.com/Kotlin/dokka/issues/2406
-    pluginConfiguration<DokkaBase, DokkaBaseConfiguration> {
-        customAssets = listOf(file("../asset/logo-icon.svg"))
-        customStyleSheets = listOf(file("../asset/logo-styles.css"))
-        separateInheritedMembers = true
-    }*/
+//    pluginConfiguration<DokkaBase, DokkaBaseConfiguration> {
+////        customAssets = listOf(file("../asset/logo-icon.svg"))
+////        customStyleSheets = listOf(file("../asset/logo-styles.css"))
+//        separateInheritedMembers = true
+//    }
 
     dokkaSourceSets {
         configureEach {
@@ -218,44 +213,51 @@ publishing {
             }
         }
     }
-    publications.withType<MavenPublication> {
-        artifact(javadocJar) // Required a workaround. See below
-        pom {
-            url = "https://github.com/vickyleu/${projectName}"
-            name = projectName
-            description = """
+    afterEvaluate {
+        publications.withType<MavenPublication> {
+            artifact(javadocJar) // Required a workaround. See below
+            if (artifactId.startsWith("compose-sooner")) {
+                artifactId = artifactId.replace("compose-sooner",currentName)
+            }
+            pom {
+                url = "https://github.com/vickyleu/${projectName}"
+                name = projectName
+                description = """
                 Visit the project on GitHub to learn more.
             """.trimIndent()
-            inceptionYear = "2024"
-            licenses {
-                license {
-                    name = "Apache-2.0 License"
-                    url = "http://www.apache.org/licenses/LICENSE-2.0.txt"
+                inceptionYear = "2024"
+                licenses {
+                    license {
+                        name = "Apache-2.0 License"
+                        url = "http://www.apache.org/licenses/LICENSE-2.0.txt"
+                    }
                 }
-            }
-            developers {
-                developer {
-                    id = "dokar3"
-                    name = "dokar3"
-                    email = ""
+                developers {
+                    developer {
+                        id = "dokar3"
+                        name = "Dokar"
+                        email = ""
+                        roles = listOf("Mobile Developer")
+                        timezone = "GMT+8"
+                    }
                 }
-            }
-            contributors {
-                // contributor {}
-            }
-            scm {
-                tag = "HEAD"
-                url = "https://github.com/vickyleu/${projectName}"
-                connection = "scm:git:github.com/vickyleu/${projectName}.git"
-                developerConnection = "scm:git:ssh://github.com/vickyleu/${projectName}.git"
-            }
-            issueManagement {
-                system = "GitHub"
-                url = "https://github.com/vickyleu/${projectName}/issues"
-            }
-            ciManagement {
-                system = "GitHub Actions"
-                url = "https://github.com/vickyleu/${projectName}/actions"
+                contributors {
+                    // contributor {}
+                }
+                scm {
+                    tag = "HEAD"
+                    url = "https://github.com/vickyleu/${projectName}"
+                    connection = "scm:git:github.com/vickyleu/${projectName}.git"
+                    developerConnection = "scm:git:ssh://github.com/vickyleu/${projectName}.git"
+                }
+                issueManagement {
+                    system = "GitHub"
+                    url = "https://github.com/vickyleu/${projectName}/issues"
+                }
+                ciManagement {
+                    system = "GitHub Actions"
+                    url = "https://github.com/vickyleu/${projectName}/actions"
+                }
             }
         }
     }

@@ -6,26 +6,39 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredWidthIn
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.toSize
 import com.dokar.sonner.icons.CheckCircle
 import com.dokar.sonner.icons.Info
 import com.dokar.sonner.icons.Warning
 import com.dokar.sonner.theme.colorsOf
+import kotlin.math.max
 import kotlin.time.Duration.Companion.milliseconds
 
 /**
@@ -71,10 +84,17 @@ object ToasterDefaults {
     @Composable
     fun iconSlot(toast: Toast) {
         val contentColor = LocalToastContentColor.current
+        val leftSize = LocalToastLeftContentSize.current
         when (toast.type) {
-            ToastType.Normal -> {}
+            ToastType.Normal -> {
+                leftSize.value = Size.Zero
+            }
             ToastType.Success -> {
-                Box(modifier = Modifier.padding(end = 16.dp)) {
+                Box(modifier = Modifier
+                    .onGloballyPositioned {
+                        leftSize.value = it.size.toSize()
+                    }
+                    .padding(end = 16.dp)) {
                     Image(
                         imageVector = CheckCircle,
                         contentDescription = "Success",
@@ -85,7 +105,11 @@ object ToasterDefaults {
             }
 
             ToastType.Info -> {
-                Box(modifier = Modifier.padding(end = 16.dp)) {
+                Box(modifier = Modifier
+                    .onGloballyPositioned {
+                        leftSize.value = it.size.toSize()
+                    }
+                    .padding(end = 16.dp)) {
                     Image(
                         imageVector = Info,
                         contentDescription = "Info",
@@ -96,7 +120,11 @@ object ToasterDefaults {
             }
 
             ToastType.Warning -> {
-                Box(modifier = Modifier.padding(end = 16.dp)) {
+                Box(modifier = Modifier
+                    .onGloballyPositioned {
+                        leftSize.value = it.size.toSize()
+                    }
+                    .padding(end = 16.dp)) {
                     Image(
                         imageVector = Warning,
                         contentDescription = "Warning",
@@ -107,7 +135,11 @@ object ToasterDefaults {
             }
 
             ToastType.Error -> {
-                Box(modifier = Modifier.padding(end = 16.dp)) {
+                Box(modifier = Modifier
+                    .onGloballyPositioned {
+                        leftSize.value = it.size.toSize()
+                    }
+                    .padding(end = 16.dp)) {
                     Image(
                         imageVector = Info,
                         contentDescription = "Error",
@@ -115,6 +147,9 @@ object ToasterDefaults {
                         colorFilter = ColorFilter.tint(contentColor),
                     )
                 }
+            }
+            else->{
+                leftSize.value = Size.Zero
             }
         }
     }
@@ -125,7 +160,30 @@ object ToasterDefaults {
     @Composable
     fun messageSlot(toast: Toast) {
         val contentColor = LocalToastContentColor.current
-        BasicText(toast.message.toString(), color = { contentColor })
+        val leftSize = LocalToastLeftContentSize.current
+        with(LocalDensity.current){
+            BoxWithConstraints(modifier = Modifier
+                .let {
+                    if(toast.type == ToastType.Normal) it else it .padding(end = leftSize.value.width.toDp())
+                }
+                .fillMaxWidth()
+                .wrapContentHeight()){
+                BasicText(
+                    toast.message.toString(),
+                    maxLines = 15,
+                    minLines = 1,
+                    style = TextStyle.Default.copy(
+                        textAlign = TextAlign.Center
+                    ),
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .requiredWidthIn(max = constraints.maxWidth.toDp())
+                        .wrapContentSize(),
+                    color = { contentColor })
+            }
+        }
+
     }
 
     /**
@@ -141,7 +199,20 @@ object ToasterDefaults {
                     onClick = { action.onClick(toast) },
                     contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
                 ) {
-                    BasicText(action.text, color = { Color.White })
+                    with(LocalDensity.current){
+                        BasicText(
+                            action.text,
+                            maxLines = 3,
+                            minLines = 1,
+                            style = TextStyle.Default.copy(
+                                textAlign = TextAlign.Center
+                            ),
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier
+                                .requiredWidthIn(max = 150.dp)
+                                .wrapContentSize(),
+                            color = { Color.White })
+                    }
                 }
             }
 
