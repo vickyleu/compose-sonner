@@ -96,4 +96,5 @@ enum class ToastType {
     Info,
     Warning,
     Error,
+    Toast
 }

@@ -82,6 +82,16 @@ internal fun BasicSample(modifier: Modifier = Modifier) {
                 }
 
                 Button(onClick = {
+                    toaster.show(
+                        "Hello #${index++}",
+                        id = ToastType.Toast.ordinal,
+                        type = ToastType.Toast
+                    )
+                }) {
+                    Text("Toast")
+                }
+
+                Button(onClick = {
                     toaster.show("Hello #${index++}", type = ToastType.Success)
                 }) {
                     Text("Success")

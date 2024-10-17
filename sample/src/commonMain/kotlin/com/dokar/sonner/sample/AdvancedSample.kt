@@ -102,6 +102,20 @@ fun AdvancedSample(modifier: Modifier = Modifier) {
                 onClick = {
                     isLoading = false
                     toaster.show(
+                        message = "Toast",
+                        id = LOADING_TOAST_ID,
+                        type = ToastType.Toast,
+                    )
+                },
+                enabled = isLoading,
+            ) {
+                Text("To toast (Replace)")
+            }
+
+            Button(
+                onClick = {
+                    isLoading = false
+                    toaster.show(
                         message = "Success",
                         id = LOADING_TOAST_ID,
                         type = ToastType.Success,

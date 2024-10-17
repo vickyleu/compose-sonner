@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.requiredWidthIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
@@ -87,6 +88,9 @@ object ToasterDefaults {
         val leftSize = LocalToastLeftContentSize.current
         when (toast.type) {
             ToastType.Normal -> {
+                leftSize.value = Size.Zero
+            }
+            ToastType.Toast -> {
                 leftSize.value = Size.Zero
             }
             ToastType.Success -> {
@@ -164,10 +168,13 @@ object ToasterDefaults {
         with(LocalDensity.current){
             BoxWithConstraints(modifier = Modifier
                 .let {
-                    if(toast.type == ToastType.Normal) it else it .padding(end = leftSize.value.width.toDp())
+                    if(toast.type in listOf(ToastType.Normal,ToastType.Toast)) it else it .padding(end = leftSize.value.width.toDp())
                 }
-                .fillMaxWidth()
-                .wrapContentHeight()){
+                .let {
+                    if(toast.type == ToastType.Toast) it.wrapContentWidth() else it.fillMaxWidth()
+                }
+                .wrapContentHeight()
+            ){
                 BasicText(
                     toast.message.toString(),
                     maxLines = 15,

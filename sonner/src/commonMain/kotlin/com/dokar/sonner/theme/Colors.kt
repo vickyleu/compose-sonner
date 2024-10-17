@@ -17,6 +17,11 @@ internal val LightToastColors = mapOf(
         content = Color(0xff171717),
         border = Color(0xffededed),
     ),
+    ToastType.Toast to ToastColors(
+        background = Color(0xff000000).copy(alpha = 0.58f),
+        content = Color.White,//Color(0xff171717),
+        border = Color.Transparent,
+    ),
     ToastType.Success to ToastColors(
         background = Color(0xffecfdf3),
         content = Color(0xff008a2e),
@@ -42,6 +47,11 @@ internal val LightToastColors = mapOf(
 internal val DarkToastColors = mapOf(
     ToastType.Normal to ToastColors(
         background = Color.Black,
+        content = Color(0xfffcfcfc),
+        border = Color(0xff333333),
+    ),
+    ToastType.Toast to ToastColors(
+        background = Color(0xff000000).copy(alpha = 0.58f),
         content = Color(0xfffcfcfc),
         border = Color(0xff333333),
     ),

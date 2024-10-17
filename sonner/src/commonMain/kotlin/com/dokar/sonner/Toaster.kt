@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -219,6 +220,7 @@ fun Toaster(
                         expanded = expanded,
                         layoutIndex = layoutIndex,
                         toast = item.toast,
+                        richColors=richColors,
                         dismissing = item.isDismissing,
                         maxVisibleToasts = maxVisibleToasts,
                         widthPolicy = widthPolicy(toast),
@@ -318,6 +320,7 @@ private fun ToastItem(
     expanded: Boolean,
     layoutIndex: Int,
     toast: Toast,
+    richColors: Boolean,
     dismissing: Boolean,
     maxVisibleToasts: Int,
     widthPolicy: ToastWidthPolicy,
@@ -447,13 +450,19 @@ private fun ToastItem(
             Row(
                 modifier = Modifier
                     .widthIn(min = widthPolicy.min, max = widthPolicy.max)
-                    .let { if (widthPolicy.fillMaxWidth) it.fillMaxWidth() else it }
-                    .shadow(
-                        elevation = elevation,
-                        shape = shape,
-                        ambientColor = shadowAmbientColor,
-                        spotColor = shadowSpotColor,
-                    )
+                    .let {
+                        if(toast.type == ToastType.Toast) it.wrapContentWidth() else it.let { if (widthPolicy.fillMaxWidth) it.fillMaxWidth() else it }
+                    }
+                    .let {
+                        if(richColors) {
+                            it
+                        }else it.shadow(
+                            elevation = elevation,
+                            shape = shape,
+                            ambientColor = shadowAmbientColor,
+                            spotColor = shadowSpotColor,
+                        )
+                    }
                     .border(
                         width = border.width,
                         brush = border.brush,
