@@ -17,7 +17,7 @@ plugins {
 }
 
 kotlin {
-    @OptIn(ExperimentalWasmDsl::class)
+    @OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
     wasmJs {
         moduleName = "compose-sooner"
         browser {
@@ -50,7 +50,7 @@ kotlin {
     androidTarget {
         publishLibraryVariants("release")
         compilerOptions{
-            jvmTarget.set(JvmTarget.JVM_11)
+            jvmTarget.set(JvmTarget.JVM_17)
         }
     }
 

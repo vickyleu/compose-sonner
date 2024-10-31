@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.window.Popup
+import androidx.lifecycle.compose.LocalLifecycleOwner
 
 internal actual fun currentNanoTime(): Long = System.nanoTime()
 
@@ -46,7 +47,7 @@ internal actual fun ToasterPopup(
 
     Popup(alignment = alignment) {
         val innerView = LocalView.current
-
+        val lifecycle = LocalLifecycleOwner.current
         var contentBounds by remember { mutableStateOf(Rect.Zero) }
 
         Box(
@@ -55,7 +56,11 @@ internal actual fun ToasterPopup(
                 // Reason: windowManager.updateViewLayout() will animate the view position
                 .fillMaxSize()
                 .pointerInteropFilter {
-                    try{
+                    try {
+                        // If the lifecycle is not started, we should not handle the touch events
+                        if (lifecycle.lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED).not()) {
+                            return@pointerInteropFilter false
+                        }
                         val isTouchOnContent = contentBounds.contains(Offset(it.x, it.y))
                         if (isTouchOnContent && it.action == MotionEvent.ACTION_DOWN) {
                             // We are going to handle these touch events
@@ -71,7 +76,7 @@ internal actual fun ToasterPopup(
                         // Send touch events to the back content
                         //TODO crashed when dispatch: androidx.compose.runtime.ComposeRuntimeError
                         backView.dispatchTouchEvent(it)
-                    }catch (e:Exception){
+                    } catch (e: Exception) {
                         false
                     }
                 }
