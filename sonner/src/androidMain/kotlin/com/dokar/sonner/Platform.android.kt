@@ -55,23 +55,25 @@ internal actual fun ToasterPopup(
                 // Reason: windowManager.updateViewLayout() will animate the view position
                 .fillMaxSize()
                 .pointerInteropFilter {
-                    val isTouchOnContent = contentBounds.contains(Offset(it.x, it.y))
-                    if (isTouchOnContent && it.action == MotionEvent.ACTION_DOWN) {
-                        // We are going to handle these touch events
-                        return@pointerInteropFilter false
+                    try{
+                        val isTouchOnContent = contentBounds.contains(Offset(it.x, it.y))
+                        if (isTouchOnContent && it.action == MotionEvent.ACTION_DOWN) {
+                            // We are going to handle these touch events
+                            return@pointerInteropFilter false
+                        }
+                        val outerLocation = intArrayOf(0, 0)
+                        val innerLocation = intArrayOf(0, 0)
+                        backView.getLocationOnScreen(outerLocation)
+                        innerView.getLocationOnScreen(innerLocation)
+                        val offsetX = innerLocation[0] - outerLocation[0]
+                        val offsetY = innerLocation[1] - outerLocation[1]
+                        it.offsetLocation(offsetX.toFloat(), offsetY.toFloat())
+                        // Send touch events to the back content
+                        //TODO crashed when dispatch: androidx.compose.runtime.ComposeRuntimeError
+                        backView.dispatchTouchEvent(it)
+                    }catch (e:Exception){
+                        false
                     }
-
-                    val outerLocation = intArrayOf(0, 0)
-                    val innerLocation = intArrayOf(0, 0)
-                    backView.getLocationOnScreen(outerLocation)
-                    innerView.getLocationOnScreen(innerLocation)
-                    val offsetX = innerLocation[0] - outerLocation[0]
-                    val offsetY = innerLocation[1] - outerLocation[1]
-
-                    it.offsetLocation(offsetX.toFloat(), offsetY.toFloat())
-
-                    // Send touch events to the back content
-                    backView.dispatchTouchEvent(it)
                 }
                 .offset { offset },
             contentAlignment = alignment,
