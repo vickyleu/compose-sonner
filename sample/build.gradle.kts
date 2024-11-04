@@ -65,9 +65,11 @@ kotlin {
             implementation(compose.foundation)
             implementation(compose.material3)
             implementation(compose.ui)
-            @OptIn(ExperimentalComposeLibrary::class)
             implementation(compose.components.resources)
             implementation(projects.sonner)
+
+            implementation("dev.chrisbanes.haze:haze:0.9.0-rc03")
+            implementation("dev.chrisbanes.haze:haze-materials:0.9.0-rc03")
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)

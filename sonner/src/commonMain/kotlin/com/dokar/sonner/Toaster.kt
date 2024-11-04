@@ -51,6 +51,12 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
 import androidx.compose.ui.window.Popup
+import dev.chrisbanes.haze.HazeDefaults
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.HazeTint
+import dev.chrisbanes.haze.hazeChild
+import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
+import dev.chrisbanes.haze.materials.HazeMaterials
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import kotlin.math.max
@@ -95,6 +101,7 @@ fun Toaster(
     swipeable: Boolean = true,
     richColors: Boolean = false,
     darkTheme: Boolean = false,
+    hazeState: HazeState = remember { HazeState() },
     showCloseButton: Boolean = false,
     contentColor: @Composable (toast: Toast) -> Color = {
         ToasterDefaults.contentColor(it, richColors, darkTheme)
@@ -139,7 +146,6 @@ fun Toaster(
     require(maxVisibleToasts > 0) { "maxVisibleToasts should be at least 1." }
 
     if (state.toasts.isEmpty()) return
-
     ToasterPopup(alignment = alignment, offset = offset) {
         val density = LocalDensity.current
 
@@ -185,7 +191,9 @@ fun Toaster(
             toastTransformHelper = toastTransformHelper,
             contentPadding = containerPadding,
             alignment = alignment,
-            modifier = modifier.testTag("Toaster"),
+            modifier = modifier
+
+                .testTag("Toaster"),
         ) { index ->
             val item = state.toasts[index]
             val toast = item.toast
@@ -220,12 +228,13 @@ fun Toaster(
                         expanded = expanded,
                         layoutIndex = layoutIndex,
                         toast = item.toast,
-                        richColors=richColors,
+                        richColors = richColors,
                         dismissing = item.isDismissing,
                         maxVisibleToasts = maxVisibleToasts,
                         widthPolicy = widthPolicy(toast),
                         swipeable = swipeable,
                         elevation = elevation,
+                        hazeState = hazeState,
                         shadowAmbientColor = shadowAmbientColor,
                         shadowSpotColor = shadowSpotColor,
                         shape = shape(toast),
@@ -313,6 +322,7 @@ private inline fun ApplyToastDismissPause(
  *
  * @param layoutIndex Starts from the most front item and starts from 0.
  */
+@OptIn(ExperimentalHazeMaterialsApi::class)
 @Composable
 private fun ToastItem(
     onRequestDismiss: () -> Unit,
@@ -326,6 +336,7 @@ private fun ToastItem(
     widthPolicy: ToastWidthPolicy,
     swipeable: Boolean,
     elevation: Dp,
+    hazeState: HazeState,
     shadowAmbientColor: Color,
     shadowSpotColor: Color,
     shape: Shape,
@@ -446,17 +457,25 @@ private fun ToastItem(
                 },
             ),
     ) {
-        Box(modifier = Modifier.padding(max(elevation * 1.5f, 10.dp))) {
+        Box(
+            modifier = Modifier.padding(max(elevation * 1.5f, 10.dp))
+//                .hazeChild(hazeState){
+//                    backgroundColor= Color.Transparent
+//                    tints = listOf(HazeTint(Color.Red.copy(alpha = 0.1f)))
+//                    blurRadius = 8.dp
+//                    noiseFactor = HazeDefaults.tintAlpha
+//                }
+        ) {
             Row(
                 modifier = Modifier
                     .widthIn(min = widthPolicy.min, max = widthPolicy.max)
                     .let {
-                        if(toast.type == ToastType.Toast) it.wrapContentWidth() else it.let { if (widthPolicy.fillMaxWidth) it.fillMaxWidth() else it }
+                        if (toast.type == ToastType.Toast) it.wrapContentWidth() else it.let { if (widthPolicy.fillMaxWidth) it.fillMaxWidth() else it }
                     }
                     .let {
-                        if(richColors) {
+                        if (richColors) {
                             it
-                        }else it.shadow(
+                        } else it.shadow(
                             elevation = elevation,
                             shape = shape,
                             ambientColor = shadowAmbientColor,

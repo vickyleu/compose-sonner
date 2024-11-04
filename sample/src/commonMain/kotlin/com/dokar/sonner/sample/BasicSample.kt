@@ -41,6 +41,8 @@ import com.dokar.sonner.ToastDismissPause
 import com.dokar.sonner.ToastType
 import com.dokar.sonner.Toaster
 import com.dokar.sonner.rememberToasterState
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.haze
 import kotlin.random.Random
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -65,8 +67,10 @@ internal fun BasicSample(modifier: Modifier = Modifier) {
     var maxVisibleToasts by remember { mutableIntStateOf(3) }
 
     var showContainerBounds by remember { mutableStateOf(false) }
-
-    Column(modifier = modifier.fillMaxSize()) {
+//    val hazeState = remember { HazeState() }
+    Column(modifier = modifier.fillMaxSize()
+//        .haze(hazeState)
+    ) {
         Column(
             modifier = Modifier
                 .padding(16.dp)
@@ -350,6 +354,7 @@ internal fun BasicSample(modifier: Modifier = Modifier) {
         maxVisibleToasts = maxVisibleToasts,
         expanded = expanded,
         richColors = richColors,
+//        hazeState = hazeState,
         darkTheme = darkTheme,
         showCloseButton = closeButton,
         alignment = alignment,
