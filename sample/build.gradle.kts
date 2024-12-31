@@ -68,8 +68,8 @@ kotlin {
             implementation(compose.components.resources)
             implementation(projects.sonner)
 
-            implementation("dev.chrisbanes.haze:haze:0.9.0-rc03")
-            implementation("dev.chrisbanes.haze:haze-materials:0.9.0-rc03")
+            implementation(libs.haze)
+            implementation(libs.haze.materials)
         }
         desktopMain.dependencies {
             implementation(compose.desktop.currentOs)
