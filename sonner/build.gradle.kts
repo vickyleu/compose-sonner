@@ -125,7 +125,7 @@ buildscript {
     }
 }
 group = "com.vickyleu.${currentName}"
-version = "1.0.2"
+version = "1.0.3"
 
 tasks.withType<PublishToMavenRepository> {
     val isMac = DefaultNativePlatform.getCurrentOperatingSystem().isMacOsX
