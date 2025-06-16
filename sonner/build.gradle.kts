@@ -72,8 +72,8 @@ kotlin {
             implementation(compose.foundation)
             implementation(compose.ui)
             implementation(libs.kotlinx.coroutines.core)
-            compileOnly("dev.chrisbanes.haze:haze:0.9.0-rc03")
-            compileOnly("dev.chrisbanes.haze:haze-materials:0.9.0-rc03")
+            compileOnly("dev.chrisbanes.haze:haze:1.6.4")
+            compileOnly("dev.chrisbanes.haze:haze-materials:1.6.4")
 
         }
         desktopMain.dependencies {
