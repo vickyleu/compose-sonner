@@ -1,16 +1,17 @@
 [versions]
-agp = "8.10.1"
-android-compileSdk = "35"
+agp = "8.13.2"
+android-compileSdk = "36"
 android-minSdk = "24"
-android-targetSdk = "34"
-haze = "1.6.4"
-jetpack-compose-bom = "2025.06.00"
-androidx-activityCompose = "1.10.1"
-compose-plugin = "1.8.1"
-dokka = "2.0.0"
-kotlin = "2.1.21"
+android-targetSdk = "36"
+haze = "1.7.2"
+jetpack-compose-bom = "2026.04.01"
+androidx-activityCompose = "1.13.0"
+compose-plugin = "1.10.3"
+dokka = "2.2.0"
+kotlin = "2.3.21"
 coroutines = "1.10.2"
 jvmTarget = "17"
+vanniktech-maven-publish = "0.36.0"
 
 [libraries]
 compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "jetpack-compose-bom" }
@@ -29,6 +30,7 @@ jetbrainsCompose = { id = "org.jetbrains.compose", version.ref = "compose-plugin
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
+vanniktech-maven-publish = { id = "com.vanniktech.maven.publish", version.ref = "vanniktech-maven-publish" }
 jetbrainsKotlinAndroid = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 # 下面这个是假的，只是为了占位
 jvmTargetPlaceHolder = { id = "org.jdk.kotlin.holder", version.ref = "jvmTarget" }

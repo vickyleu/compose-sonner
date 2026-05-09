@@ -9,6 +9,9 @@ enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 pluginManagement {
     listOf(repositories, dependencyResolutionManagement.repositories).forEach {
         it.apply {
+            maven("https://maven.aliyun.com/repository/google")
+            maven("https://maven.aliyun.com/repository/public")
+            maven("https://maven.aliyun.com/repository/gradle-plugin")
             mavenCentral()
             gradlePluginPortal()
             google {
@@ -30,17 +33,17 @@ plugins {
 
 
 dependencyResolutionManagement {
-    //FAIL_ON_PROJECT_REPOS
-//    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-    repositoriesMode.set(RepositoriesMode.PREFER_PROJECT)
     repositories {
-        mavenCentral()
+        maven("https://maven.aliyun.com/repository/google")
+        maven("https://maven.aliyun.com/repository/public")
         google {
-            content {
-                includeGroupByRegex(".*google.*")
-                includeGroupByRegex(".*android.*")
+            mavenContent {
+                includeGroupAndSubgroups("androidx")
+                includeGroupAndSubgroups("com.android")
+                includeGroupAndSubgroups("com.google")
             }
         }
+        mavenCentral()
         maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
         maven { setUrl("https://dl.bintray.com/kotlin/kotlin-dev") }
         maven { setUrl("https://dl.bintray.com/kotlin/kotlin-eap") }
@@ -91,25 +94,6 @@ dependencyResolutionManagement {
             setUrl("https://jitpack.io")
             content {
                 includeGroupByRegex("com.github.*")
-            }
-        }
-
-        val properties = Properties().apply {
-            runCatching { rootProject.projectDir.resolve("local.properties") }
-                .getOrNull()
-                .takeIf { it?.exists() ?: false }
-                ?.reader()
-                ?.use(::load)
-        }
-        val environment: Map<String, String?> = System.getenv()
-        extra["githubToken"] = properties["github.token"] as? String
-            ?: environment["GITHUB_TOKEN"] ?: ""
-
-        maven {
-            url = uri("https://maven.pkg.github.com/vickyleu/${rootProject.name}")
-            credentials {
-                username = "vickyleu"
-                password = extra["githubToken"]?.toString()
             }
         }
 

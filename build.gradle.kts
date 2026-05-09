@@ -1,18 +1,9 @@
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.asCoroutineDispatcher
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
-import java.net.HttpURLConnection
-import java.net.URL
-import java.util.Properties
-import java.util.concurrent.Executors
+import com.vanniktech.maven.publish.DeploymentValidation
+import com.vanniktech.maven.publish.MavenPublishBaseExtension
+import org.gradle.plugins.signing.Sign
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    // this is necessary to avoid the plugins to be loaded multiple times
-    // in each subproject's classloader
     alias(libs.plugins.androidApplication) apply false
     alias(libs.plugins.androidLibrary) apply false
     alias(libs.plugins.jetbrainsCompose) apply false
@@ -20,142 +11,99 @@ plugins {
     alias(libs.plugins.jetbrainsKotlinAndroid) apply false
     alias(libs.plugins.compose.compiler) apply false
     alias(libs.plugins.dokka) apply false
+    alias(libs.plugins.vanniktech.maven.publish) apply false
 }
 
+val publishGroup = "io.github.vickyleu.sonner"
+val publishVersion = "2.0.0"
+val publishRepo = "compose-sonner"
+val publishUrl = "https://github.com/vickyleu/$publishRepo"
 
 allprojects {
-    if( tasks.findByName("testClasses") == null){
-        try {
-            tasks.register("testClasses")
-        } catch (e: Exception) {
-            e.printStackTrace()
+    if (tasks.findByName("testClasses") == null) {
+        tasks.register("testClasses")
+    }
+
+    tasks.withType<KotlinCompile>().configureEach {
+        compilerOptions {
+            freeCompilerArgs.add("-Xexpect-actual-classes")
         }
     }
 }
 
+subprojects {
+    if (name != "sonner") return@subprojects
 
+    apply(plugin = "org.jetbrains.dokka")
+    apply(plugin = "com.vanniktech.maven.publish")
 
-tasks.register("deletePackages") {
-    val libs = rootDir.resolve("gradle/libs.versions.toml")
-    val map = hashMapOf<String, String>()
-    libs.useLines {
-        it.forEach { line ->
-            if (line.contains("=") && line.startsWith("#").not()) {
-                val (key, value) = line.split("=")
-                map[key
-                    .replace(" ", "").removeSurrounding("\"")] =
-                    value
-                        .replace(" ", "").removeSurrounding("\"")
-            }
+    extensions.configure<org.jetbrains.dokka.gradle.DokkaExtension>("dokka") {
+        moduleName.set("sonner")
+        dokkaPublications.named("html") {
+            offlineMode.set(false)
+            moduleName.set("sonner")
+        }
+        dokkaSourceSets.configureEach {
+            reportUndocumented.set(false)
+            enableAndroidDocumentationLink.set(true)
+            enableKotlinStdLibDocumentationLink.set(true)
+            enableJdkDocumentationLink.set(true)
+            jdkVersion.set(libs.versions.jvmTarget.get().toInt())
         }
     }
-//    "sonner"//
-    val rootProjectName = rootDir.name
-        .replace("-new", "")
-        .replace("compose-", "")
 
-    val mavenAuthor = "vickyleu"
-    val mavenGroup = "com.$mavenAuthor.$rootProjectName"
-    group = "publishing"
-    description = "Delete all packages in the GitHub Packages registry"
-    val keyword = mavenGroup
-    println("Deleting packages with keyword: $keyword")
-    val properties = Properties().apply {
-        runCatching { rootProject.file("local.properties") }
-            .getOrNull()
-            .takeIf { it?.exists() ?: false }
-            ?.reader()
-            ?.use(::load)
-    }
-// For information about signing.* properties,
-// see comments on signing { ... } block below
-    val environment: Map<String, String?> = System.getenv()
-    val myExtra = mutableMapOf<String, Any>()
-    myExtra["githubToken"] = properties["github.token"] as? String
-        ?: environment["GITHUB_TOKEN"] ?: ""
-    val headers = mapOf(
-        "Accept" to "application/vnd.github.v3+json",
-        "Authorization" to "Bearer ${myExtra["githubToken"]}",
-        "X-GitHub-Api-Version" to "2022-11-28"
-    )
-    doLast {
-        runBlocking {
-            val executor = Executors.newFixedThreadPool(10)
-            val scope = CoroutineScope(executor.asCoroutineDispatcher())
-            val fetchJobs = packageTypes.flatMap { packageType ->
-                visibilityTypes.map { visibility ->
-                    scope.async {
-                        fetchPackages(packageType, visibility, headers)
-                    }
+    extensions.configure<MavenPublishBaseExtension>("mavenPublishing") {
+        coordinates(publishGroup, "sonner", publishVersion)
+        publishToMavenCentral(
+            automaticRelease = true,
+            validateDeployment = DeploymentValidation.PUBLISHED,
+        )
+        signAllPublications()
+
+        pom {
+            name.set("Vickyleu KMP Sonner")
+            description.set("An opinionated toast component for Compose Multiplatform.")
+            inceptionYear.set("2024")
+            url.set(publishUrl)
+            licenses {
+                license {
+                    name.set("The Apache License, Version 2.0")
+                    url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
+                    distribution.set("repo")
                 }
             }
-            fetchJobs.awaitAll().forEach { packages ->
-                allPackages.addAll(packages)
-            }
-            val deleteJobs = allPackages.filter { pkg ->
-                val packageName = pkg["name"] as String
-                packageName.contains(keyword)
-            }.map { pkg ->
-                val packageType = pkg["package_type"] as String
-                val packageName = pkg["name"] as String
-                scope.async {
-                    deletePackage(packageType, packageName, headers)
+            developers {
+                developer {
+                    id.set("vickyleu")
+                    name.set("Vickyleu")
+                    url.set("https://github.com/vickyleu")
                 }
             }
-            try {
-                deleteJobs.awaitAll()
-                executor.shutdown()
-            } catch (e: Exception) {
-                println("删除包失败: ${e.message}")
+            scm {
+                url.set(publishUrl)
+                connection.set("scm:git:https://github.com/vickyleu/$publishRepo.git")
+                developerConnection.set("scm:git:ssh://git@github.com/vickyleu/$publishRepo.git")
+            }
+            issueManagement {
+                system.set("GitHub")
+                url.set("$publishUrl/issues")
+            }
+            ciManagement {
+                system.set("GitHub Actions")
+                url.set("$publishUrl/actions")
             }
         }
     }
-}
-val packageTypes = listOf("npm", "maven", "docker", "container")
-val visibilityTypes = listOf("public", "private", "internal")
-val allPackages = mutableListOf<Map<String, Any>>()
-fun fetchPackages(
-    packageType: String,
-    visibility: String,
-    headers: Map<String, String>
-): List<Map<String, Any>> {
-    val packages = mutableListOf<Map<String, Any>>()
-    var page = 1
 
-    while (true) {
-        val url =
-            URL("https://api.github.com/user/packages?package_type=$packageType&visibility=$visibility&page=$page&per_page=100")
-        val connection = url.openConnection() as HttpURLConnection
-
-        headers.forEach { (key, value) -> connection.setRequestProperty(key, value) }
-
-        if (connection.responseCode == 200) {
-            val response = connection.inputStream.bufferedReader().use { it.readText() }
-            val batch: List<Map<String, Any>> = jacksonObjectMapper().readValue(response)
-            if (batch.isEmpty()) break
-            packages.addAll(batch)
-            page++
-        } else {
-            println("获取$packageType ($visibility) 包列表失败，错误代码: ${connection.responseCode}")
-            println(connection.inputStream.bufferedReader().use { it.readText() })
-            break
+    tasks.withType<Sign>().configureEach {
+        onlyIf {
+            val hasSigningKey =
+                providers.gradleProperty("signingInMemoryKey").isPresent ||
+                    providers.gradleProperty("signing.secretKeyRingFile").isPresent
+            val publishingToCentral = gradle.taskGraph.allTasks.any { task ->
+                task.name.contains("MavenCentral")
+            }
+            hasSigningKey || publishingToCentral
         }
     }
-
-    return packages
 }
-
-fun deletePackage(packageType: String, packageName: String, headers: Map<String, String>) {
-    val url = URL("https://api.github.com/user/packages/$packageType/$packageName")
-    val connection = url.openConnection() as HttpURLConnection
-    connection.requestMethod = "DELETE"
-    headers.forEach { (key, value) -> connection.setRequestProperty(key, value) }
-
-    if (connection.responseCode == 204 || connection.responseCode == 200) {
-        println("$packageName 删除成功")
-    } else {
-        println("$packageName 删除失败，错误代码: ${connection.responseCode}")
-        println(connection.inputStream.bufferedReader().use { it.readText() })
-    }
-}
-
