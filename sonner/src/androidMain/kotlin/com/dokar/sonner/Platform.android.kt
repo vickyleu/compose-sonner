@@ -73,10 +73,12 @@ internal actual fun ToasterPopup(
                         val offsetX = innerLocation[0] - outerLocation[0]
                         val offsetY = innerLocation[1] - outerLocation[1]
                         it.offsetLocation(offsetX.toFloat(), offsetY.toFloat())
-                        // Send touch events to the back content
-                        //TODO crashed when dispatch: androidx.compose.runtime.ComposeRuntimeError
+                        // Send touch events to the back content.
+                        // 这里 dispatchTouchEvent 可能间接触发 androidx.compose.runtime.ComposeRuntimeError
+                        // （pending composition has not been applied）。该错误是 Error 而非 Exception，
+                        // 所以这里改成捕获 Throwable，避免 App 直接进程崩溃。
                         backView.dispatchTouchEvent(it)
-                    } catch (e: Exception) {
+                    } catch (e: Throwable) {
                         false
                     }
                 }
